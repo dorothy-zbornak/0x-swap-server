@@ -2,7 +2,7 @@
 require('colors');
 const { ERC20BridgeSource, SwapQuoter: ProdSwapQuoter } = require('@0x/asset-swapper');
 const { SwapQuoter: DevSwapQuoter } = require('@0x/asset-swapper-dev');
-const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses');
+const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses-dev');
 const { Orderbook } = require('@0x/orderbook-dev');
 const { RPCSubprovider, SupportedProvider, Web3ProviderEngine } = require('@0x/subproviders');
 const { providerUtils: ZeroExProviderUtils } = require('@0x/utils');
@@ -30,7 +30,6 @@ const GAS_SCHEDULE = {
     [ERC20BridgeSource.CurveUsdcDaiUsdtTusd]: 10e5,
     [ERC20BridgeSource.CurveUsdcDaiUsdtBusd]: 10e5,
 };
-console.log(ERC20BridgeSource, GAS_SCHEDULE);
 const FEE_SCHEDULE = Object.assign(
     {},
     ...Object.keys(GAS_SCHEDULE).map(k => ({
@@ -47,7 +46,6 @@ const DEFAULT_MARKET_OPTS = {
     feeSchedule: FEE_SCHEDULE,
     gasSchedule: GAS_SCHEDULE,
     allowFallback: !!ARGV.fallback,
-    // excludedSources: [ERC20BridgeSource.Native],
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
