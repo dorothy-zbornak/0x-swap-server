@@ -1,11 +1,9 @@
 'use strict'
 require('colors');
+const Web3 = require('web3');
 const { ERC20BridgeSource, SwapQuoter: ProdSwapQuoter } = require('@0x/asset-swapper');
 const { SwapQuoter: DevSwapQuoter } = require('@0x/asset-swapper-dev');
-const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses-dev');
 const { Orderbook } = require('@0x/orderbook-dev');
-const { RPCSubprovider, SupportedProvider, Web3ProviderEngine } = require('@0x/subproviders');
-const { providerUtils: ZeroExProviderUtils } = require('@0x/utils');
 const BigNumber = require('bignumber.js');
 const process = require('process');
 const yargs = require('yargs');
@@ -17,7 +15,6 @@ const ARGV = yargs
     .string('pool')
     .argv;
 
-const ADDRESSES = getContractAddressesForChainOrThrow(1);
 const SRA_API_URL = 'https://api.0x.org/sra';
 const GAS_SCHEDULE = {
     [ERC20BridgeSource.Native]: 1.5e5,
@@ -49,7 +46,6 @@ const DEFAULT_MARKET_OPTS = {
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
-    contractAddresses: ADDRESSES,
     liquidityProviderRegistryAddress: ARGV.pool,
 };
 
@@ -72,10 +68,15 @@ function createOrderbook(sraApiUrl) {
 }
 
 function createZeroExProvider(rpcHost) {
-    const providerEngine = new Web3ProviderEngine();
-    providerEngine.addProvider(new RPCSubprovider(rpcHost));
-    ZeroExProviderUtils.startProviderEngine(providerEngine);
-    return providerEngine;
+    let provider;
+    if (/^ws:\/\//.test(rpcHost)) {
+        provider = new Web3.providers.WebsocketProvider(rpcHost);
+    } else if (/^https?:\/\//.test(rpcHost)) {
+        provider = new Web3.providers.HttpProvider(rpcHost);
+    }
+    return {
+        sendAsync: (payload, callback) => provider.send(payload, (err, r) => callback(err || null, r)),
+    };
 }
 
 function mergeOpts(...opts) {
