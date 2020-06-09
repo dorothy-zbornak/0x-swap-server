@@ -36,4 +36,8 @@ module.exports = {
         decimals: 8,
         address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     },
+    'KNC': {
+        decimals: 18,
+        address: '0xdd974d5c2e2928dea5f71b9825b8b646686bd200',
+    },
 };
