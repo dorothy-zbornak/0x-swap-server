@@ -26,6 +26,7 @@ const GAS_SCHEDULE = {
     [ERC20BridgeSource.CurveUsdcDaiUsdt]: 9e5,
     [ERC20BridgeSource.CurveUsdcDaiUsdtTusd]: 10e5,
     [ERC20BridgeSource.CurveUsdcDaiUsdtBusd]: 10e5,
+    [ERC20BridgeSource.CurveUsdcDaiUsdtSusd]: 6e5,
 };
 const FEE_SCHEDULE = Object.assign(
     {},
@@ -36,7 +37,7 @@ const FEE_SCHEDULE = Object.assign(
 const DEFAULT_MARKET_OPTS = {
     excludedSources: [],
     runLimit: 2 ** 15,
-    bridgeSlippage: 0.03,
+    bridgeSlippage: 0.01,
     maxFallbackSlippage: 0.015,
     numSamples: 13,
     sampleDistributionBase: 1.05,
@@ -47,6 +48,7 @@ const DEFAULT_MARKET_OPTS = {
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
     liquidityProviderRegistryAddress: ARGV.pool,
+    expiryBufferMs: 90 * 1000,
 };
 
 (async() => {
