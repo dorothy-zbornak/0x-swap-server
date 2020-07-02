@@ -1,24 +1,24 @@
 'use strict'
-const { SwapQuoteConsumer} = require('@0x/asset-swapper');
+const { SwapQuoteConsumer } = require('@0x/asset-swapper');
 const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses');
 const BigNumber = require('bignumber.js');
 const express = require('express');
 const TOKENS = require('./tokens');
 
 class Server {
-    constructor(provider) {
+    constructor(provider, addresses) {
         this._quoteConsumer = new SwapQuoteConsumer(
             provider,
             {
                 chainId: 1,
-                contractAddresses: getContractAddressesForChainOrThrow(1),
+                contractAddresses: addresses || getContractAddressesForChainOrThrow(1),
             },
         );
         this._app = express();
         this._app.use(express.json());
     }
 
-    addQuoteEndpoint(endpoint, quoter) {
+    addQuoteEndpoint(endpoint, quoter, opts = {}) {
         this._app.get(
             endpoint,
             async (req, res) => {
@@ -29,13 +29,24 @@ class Server {
                         calldataHexString: callData,
                         toAddress,
                         ethAmount,
+                        allowanceTarget,
                     } = await this._quoteConsumer.getCalldataOrThrowAsync(
                         quote,
-                        {
-                            useExtensionContract: quoterOpts.sellToken === 'ETH' ? 'FORWARDER' : undefined
-                        },
+                        !opts.v0
+                            ? {
+                                useExtensionContract: 'EXCHANGE_PROXY',
+                                extensionContractOpts: {
+                                    isFromETH: req.query.sellToken === 'ETH',
+                                    isToETH: req.query.buyToken === 'ETH',
+                                },
+                            }
+                            : {
+                                useExtensionContract: req.query.sellToken === 'ETH'
+                                    ? 'FORWARDER' : 'NONE',
+                            },
                     );
                     res.json({
+                        allowanceTarget,
                         price: getPrice(quoterOpts.buyToken, quoterOpts.sellToken, quote.bestCaseQuoteInfo),
                         to: toAddress,
                         value: ethAmount,
@@ -44,11 +55,12 @@ class Server {
                         gasPrice: quote.gasPrice,
                         orders: cleanSignedOrderFields(quote.orders),
                         sources: convertSourceBreakdownToArray(quote.sourceBreakdown),
-                        buyAmount: quote.makerAssetFillAmount || quote.bestCaseQuoteInfo.makerAssetAmount,
-                        sellAmount: quote.takerAssetFillAmount || quote.bestCaseQuoteInfo.totalTakerAssetAmount,
+                        buyAmount: quote.bestCaseQuoteInfo.makerAssetAmount,
+                        sellAmount: quote.bestCaseQuoteInfo.totalTakerAssetAmount,
                         protocolFee: quote.worstCaseQuoteInfo.protocolFeeInWeiAmount,
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
+                        maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAssetAmount,
                     });
                 } catch (err) {
                     console.error(err);
@@ -79,8 +91,6 @@ function createQuoterOpts(query) {
     if (!buyAmount && !sellAmount) {
         throw new Error('No buy or sell a mount specified');
     }
-    buyToken = (buyToken === 'WETH' ? 'ETH' : buyToken) || 'ETH';
-    sellToken = (sellToken === 'WETH' ? 'ETH' : sellToken) || 'ETH';
     return {
         buyToken,
         sellToken,
@@ -93,6 +103,7 @@ function createQuoterOpts(query) {
         gasPrice: query.gasPrice !== undefined ? new BigNumber(query.gasPrice) : undefined,
         numSamples: query.numSamples !== undefined ? parseInt(query.numSamples) : undefined,
         runLimit: query.runLimit !== undefined ? parseInt(query.runLimit) : undefined,
+        excludedSources: (query.excludedSources || '').split(',').map(s => s === '0x' ? 'Native' : s),
     };
 }
 
