@@ -19,7 +19,10 @@ const SRA_API_URL = 'https://api.0x.org/sra';
 const GAS_SCHEDULE = {
     [ERC20BridgeSource.Native]: 1.5e5,
     [ERC20BridgeSource.Uniswap]: 3e5,
+    [ERC20BridgeSource.UniswapV2]: 3.5e5,
+    [ERC20BridgeSource.UniswapV2Eth]: 4e5,
     [ERC20BridgeSource.LiquidityProvider]: 3e5,
+    [ERC20BridgeSource.MultiBridge]: 6.5e5,
     [ERC20BridgeSource.Eth2Dai]: 5.5e5,
     [ERC20BridgeSource.Kyber]: 8e5,
     [ERC20BridgeSource.CurveUsdcDai]: 9e5,
@@ -27,18 +30,15 @@ const GAS_SCHEDULE = {
     [ERC20BridgeSource.CurveUsdcDaiUsdtTusd]: 10e5,
     [ERC20BridgeSource.CurveUsdcDaiUsdtBusd]: 10e5,
     [ERC20BridgeSource.CurveUsdcDaiUsdtSusd]: 6e5,
-    [ERC20BridgeSource.UniswapV2]: 3.5e5,
-    [ERC20BridgeSource.UniswapV2Eth]: 4e5,
-    [ERC20BridgeSource.MultiBridge]: 6.5e5,
 };
 const FEE_SCHEDULE = Object.assign(
     {},
     ...Object.keys(GAS_SCHEDULE).map(k => ({
-        [k]: new BigNumber(GAS_SCHEDULE[k]),
+        [k]: new BigNumber(GAS_SCHEDULE[k] + 150e3),
     })),
-    {
-        [ERC20BridgeSource.Native]: new BigNumber(GAS_SCHEDULE[ERC20BridgeSource.Native] + 1.5e3),
-    },
+    // {
+    //     [ERC20BridgeSource.Native]: new BigNumber(GAS_SCHEDULE[ERC20BridgeSource.Native] + 150e3),
+    // },
 );
 const DEFAULT_MARKET_OPTS = {
     excludedSources: [],
@@ -49,7 +49,7 @@ const DEFAULT_MARKET_OPTS = {
     sampleDistributionBase: 1.05,
     feeSchedule: FEE_SCHEDULE,
     gasSchedule: GAS_SCHEDULE,
-    allowFallback: true,
+    allowFallback: false,
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
@@ -62,7 +62,9 @@ const SWAP_QUOTER_OPTS = {
     const provider = createZeroExProvider(process.env.NODE_RPC);
     const orderbook = createOrderbook(SRA_API_URL);
     const server = new Server(provider, addresses);
-    server.addQuoteEndpoint('/swap/dev/quote', createQuoter(provider, orderbook), { v0: ARGV.v0 });
+    server.addQuoteEndpoint('/swap/prod/quote', createQuoter(provider, orderbook, 150e3), { v0: ARGV.v0 });
+    server.addQuoteEndpoint('/swap/70k/quote', createQuoter(provider, orderbook, 70e3), { v0: ARGV.v0 });
+    server.addQuoteEndpoint('/swap/110k/quote', createQuoter(provider, orderbook, 110e3), { v0: ARGV.v0 });
     await server.listen(ARGV.port);
     console.log(`${'*'.bold} Listening on port ${ARGV.port.toString().bold.green}...`);
 })();
@@ -99,7 +101,7 @@ function mergeOpts(...opts) {
     return r;
 }
 
-function createQuoter(provider, orderbook) {
+function createQuoter(provider, orderbook, protocolFee) {
     const swapQuoter = new SwapQuoter(
         provider,
         orderbook,
@@ -107,7 +109,19 @@ function createQuoter(provider, orderbook) {
     );
     return async (opts) => {
         console.log(`dev: ${JSON.stringify(opts)}`);
-        const marketOpts = mergeOpts(DEFAULT_MARKET_OPTS, opts);
+        const marketOpts = mergeOpts(
+            {},
+            DEFAULT_MARKET_OPTS,
+            {
+                feeSchedule: Object.assign(
+                    {},
+                    ...Object.keys(GAS_SCHEDULE).map(k => ({
+                        [k]: new BigNumber(GAS_SCHEDULE[k] + protocolFee),
+                    })),
+                ),
+            },
+            opts,
+        );
         if (opts.buyAmount) {
             return swapQuoter.getMarketBuySwapQuoteAsync(
                 opts.buyTokenAddress,
