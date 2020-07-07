@@ -37,7 +37,7 @@ const FEE_SCHEDULE = Object.assign(
         [k]: new BigNumber(GAS_SCHEDULE[k]),
     })),
     {
-        [ERC20BridgeSource.Native]: new BigNumber(GAS_SCHEDULE[ERC20BridgeSource.Native] + 1.5e3),
+        [ERC20BridgeSource.Native]: new BigNumber(GAS_SCHEDULE[ERC20BridgeSource.Native] + 150e3),
     },
 );
 const DEFAULT_MARKET_OPTS = {
