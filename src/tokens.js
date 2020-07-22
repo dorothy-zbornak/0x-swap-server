@@ -36,6 +36,14 @@ module.exports = {
         decimals: 8,
         address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     },
+    'renBTC': {
+        decimals: 8,
+        address: '0xeb4c2781e4eba804ce9a9803c67d0893436bb27d',
+    },
+    'sBTC': {
+        decimals: 18,
+        address: '0xfe18be6b3bd88a2d2a7f928d00292e7a9963cfc6',
+    },
     'KNC': {
         decimals: 18,
         address: '0xdd974d5c2e2928dea5f71b9825b8b646686bd200',

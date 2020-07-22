@@ -1,55 +1,39 @@
 'use strict'
 require('colors');
 const Web3 = require('web3');
-const { ERC20BridgeSource, SwapQuoter } = require('@0x/asset-swapper');
+const { SwapQuoter } = require('@0x/asset-swapper');
 const { Orderbook } = require('@0x/orderbook');
 const BigNumber = require('bignumber.js');
 const process = require('process');
 const yargs = require('yargs');
 const { Server } = require('./server');
 const { addresses } = require('./addresses');
+const {
+    FEE_SCHEDULE_V0,
+    FEE_SCHEDULE_V1,
+    GAS_SCHEDULE_V0,
+    GAS_SCHEDULE_V1
+} = require('./schedules');
 
 const ARGV = yargs
-    .number('port').default('port', 7001)
-    .boolean('v0').default('v0', false)
-    .string('pool')
+    .option('port', { alias: 'p', type: 'number', default: 7001 })
+    .option('v0', { type: 'boolean' })
+    .option('pool', { type: 'string' })
+    .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 13 })
     .argv;
 
 const SRA_API_URL = 'https://api.0x.org/sra';
-const GAS_SCHEDULE = {
-    [ERC20BridgeSource.Native]: 1.5e5,
-    [ERC20BridgeSource.Uniswap]: 3e5,
-    [ERC20BridgeSource.LiquidityProvider]: 3e5,
-    [ERC20BridgeSource.Eth2Dai]: 5.5e5,
-    [ERC20BridgeSource.Kyber]: 8e5,
-    [ERC20BridgeSource.CurveUsdcDai]: 9e5,
-    [ERC20BridgeSource.CurveUsdcDaiUsdt]: 9e5,
-    [ERC20BridgeSource.CurveUsdcDaiUsdtTusd]: 10e5,
-    [ERC20BridgeSource.CurveUsdcDaiUsdtBusd]: 10e5,
-    [ERC20BridgeSource.CurveUsdcDaiUsdtSusd]: 6e5,
-    [ERC20BridgeSource.UniswapV2]: 3.5e5,
-    [ERC20BridgeSource.UniswapV2Eth]: 4e5,
-    [ERC20BridgeSource.MultiBridge]: 6.5e5,
-};
-const FEE_SCHEDULE = Object.assign(
-    {},
-    ...Object.keys(GAS_SCHEDULE).map(k => ({
-        [k]: new BigNumber(GAS_SCHEDULE[k]),
-    })),
-    {
-        [ERC20BridgeSource.Native]: new BigNumber(GAS_SCHEDULE[ERC20BridgeSource.Native] + 150e3),
-    },
-);
 const DEFAULT_MARKET_OPTS = {
     excludedSources: [],
-    runLimit: 2 ** 15,
+    runLimit: ARGV.runLimit,
     bridgeSlippage: 0.01,
     maxFallbackSlippage: 0.015,
     numSamples: 13,
     sampleDistributionBase: 1.05,
-    feeSchedule: FEE_SCHEDULE,
-    gasSchedule: GAS_SCHEDULE,
     allowFallback: true,
+    feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
+    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V0,
+    shouldBatchBridgeOrders: false,
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
