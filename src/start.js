@@ -33,12 +33,12 @@ const DEFAULT_MARKET_OPTS = {
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
     gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V0,
-    shouldBatchBridgeOrders: false,
+    shouldBatchBridgeOrders: true,
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
     liquidityProviderRegistryAddress: ARGV.pool,
-    expiryBufferMs: 90 * 1000,
+    expiryBufferMs: 60 * 1000,
     contractAddresses: addresses,
 };
 
