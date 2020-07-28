@@ -4,10 +4,13 @@ Run a minimal swap/quote endpoint for A-B testing different versions of asset-sw
 ## Setup
 You need to `yarn link` `asset-swapper` from your monorepo folder into this project.
 ```bash
-$ cd $YOUR_MONOREPO_ROOT/packages/asset-swapper
-$ yarn link
+$ cd $YOUR_MONOREPO_ROOT/packages/asset-swapper && yarn link
+$ cd $YOUR_MONOREPO_ROOT/packages/contract-artifacts && yarn link
+$ cd $YOUR_MONOREPO_ROOT/packages/contract-addresses && yarn link
+$ cd $YOUR_MONOREPO_ROOT/packages/contract-wrappers && yarn link
 $ cd $SWAP_SERVER_ROOT
-$ yarn link '@0x/asset-swapper'
+$ yarn link '@0x/asset-swapper' && yarn link '@0x/contract-artifacts' \
+ && yarn link '@0x/contract-addresses' && yarn link '@0x/contract-wrappers'
 ```
 
 \* *You might also need to do the same for `@0x/utils`.*

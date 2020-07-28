@@ -19,7 +19,7 @@ const ARGV = yargs
     .option('port', { alias: 'p', type: 'number', default: 7001 })
     .option('v0', { type: 'boolean' })
     .option('pool', { type: 'string' })
-    .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 13 })
+    .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
     .argv;
 
 const SRA_API_URL = 'https://api.0x.org/sra';
@@ -33,7 +33,7 @@ const DEFAULT_MARKET_OPTS = {
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
     gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V0,
-    shouldBatchBridgeOrders: true,
+    shouldBatchBridgeOrders: ARGV.v0 ? true : false,
 };
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
