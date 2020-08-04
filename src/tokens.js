@@ -48,4 +48,8 @@ module.exports = {
         decimals: 18,
         address: '0xdd974d5c2e2928dea5f71b9825b8b646686bd200',
     },
+    'BAL': {
+        decimals: 18,
+        address: '0xba100000625a3754423978a60c9317c58a424e3d',
+    },
 };

@@ -32,7 +32,7 @@ const DEFAULT_MARKET_OPTS = {
     sampleDistributionBase: 1.05,
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
-    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V0,
+    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V1,
     shouldBatchBridgeOrders: ARGV.v0 ? true : false,
 };
 const SWAP_QUOTER_OPTS = {
