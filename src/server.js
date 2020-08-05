@@ -47,7 +47,12 @@ class Server {
                     );
                     res.json({
                         allowanceTarget,
-                        price: getPrice(quoterOpts.buyToken, quoterOpts.sellToken, quote.bestCaseQuoteInfo),
+                        price: getPrice(
+                            quoterOpts.buyAmount ? 'buy' : 'sell',
+                            quoterOpts.buyToken,
+                            quoterOpts.sellToken,
+                            quote.bestCaseQuoteInfo,
+                        ),
                         to: toAddress,
                         value: ethAmount,
                         data: callData,
@@ -107,11 +112,12 @@ function createQuoterOpts(query) {
     };
 }
 
-function getPrice(buyToken, sellToken, quoteInfo) {
+function getPrice(side, buyToken, sellToken, quoteInfo) {
     const buyDecimals = TOKENS[buyToken].decimals;
     const sellDecimals = TOKENS[sellToken].decimals;
-    return quoteInfo.makerAssetAmount.div(10**buyDecimals)
+    const price = quoteInfo.makerAssetAmount.div(10**buyDecimals)
         .div(quoteInfo.totalTakerAssetAmount.div(10**sellDecimals));
+    return side === 'sell' ? price : price.pow(-1);
 }
 
 function convertSourceBreakdownToArray(sourceBreakdown) {

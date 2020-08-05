@@ -20,6 +20,8 @@ const ARGV = yargs
     .option('v0', { type: 'boolean' })
     .option('pool', { type: 'string' })
     .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
+    .option('samples', { alias: 's', type: 'number', default: 13 })
+    .option('dist', { alias: 'd', type: 'number', default: 1.05 })
     .argv;
 
 const SRA_API_URL = 'https://api.0x.org/sra';
@@ -28,8 +30,8 @@ const DEFAULT_MARKET_OPTS = {
     runLimit: ARGV.runLimit,
     bridgeSlippage: 0.01,
     maxFallbackSlippage: 0.015,
-    numSamples: 13,
-    sampleDistributionBase: 1.05,
+    numSamples: ARGV.samples,
+    sampleDistributionBase: ARGV.dist,
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
     gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V1,
