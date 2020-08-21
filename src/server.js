@@ -109,6 +109,7 @@ function createQuoterOpts(query) {
         numSamples: query.numSamples !== undefined ? parseInt(query.numSamples) : undefined,
         runLimit: query.runLimit !== undefined ? parseInt(query.runLimit) : undefined,
         excludedSources: (query.excludedSources || '').split(',').map(s => s === '0x' ? 'Native' : s),
+        takerAddress: query.takerAddress,
     };
 }
 
