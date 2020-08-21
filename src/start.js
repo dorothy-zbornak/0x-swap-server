@@ -44,6 +44,7 @@ const DEFAULT_MARKET_OPTS = {
     shouldBatchBridgeOrders: ARGV.v0 ? true : false,
     rfqt: {
         apiKey: RFQT_OPTS.apiKey,
+        makerEndpointMaxResponseTimeMs: 600,
     },
 };
 const SWAP_QUOTER_OPTS = {
