@@ -52,4 +52,20 @@ module.exports = {
         decimals: 18,
         address: '0xba100000625a3754423978a60c9317c58a424e3d',
     },
+    'TUSD': {
+        decimals: 18,
+        address: '0x0000000000085d4780B73119b644AE5ecd22b376',
+    },
+    'COMP': {
+        decimals: 18,
+        address: '0xc00e94cb662c3520282e6f5717214004a7f26888',
+    },
+    'LEND': {
+        decimals: 18,
+        address: '0x80fB784B7eD66730e8b1DBd9820aFD29931aab03',
+    },
+    'SNX': {
+        decimals: 18,
+        address: '0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f',
+    }
 };
