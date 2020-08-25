@@ -84,13 +84,26 @@ class Server {
 }
 
 function createQuoterOpts(query) {
-    let { buyToken, sellToken, buyAmount, sellAmount } = query;
+    let {
+        buyToken,
+        sellToken,
+        buyAmount,
+        sellAmount,
+        blockNumber,
+        sampleDistributionAlpha,
+        sampleDistributionBeta,
+    } = query;
     if (!buyAmount && !sellAmount) {
         throw new Error('No buy or sell a mount specified');
     }
     return {
         buyToken,
         sellToken,
+        blockNumber: parseInt(blockNumber),
+        sampleDistributionParameters: {
+            alpha: parseFloat(sampleDistributionAlpha),
+            beta: parseFloat(sampleDistributionBeta),
+        },
         buyTokenAddress: TOKENS[buyToken].address,
         sellTokenAddress: TOKENS[sellToken].address,
         buyAmount: buyAmount !== undefined ? new BigNumber(buyAmount) : undefined,
@@ -99,7 +112,7 @@ function createQuoterOpts(query) {
         maxFallbackSlippage:
             query.maxFallbackSlippage !== undefined ? parseFloat(query.maxFallbackSlippage) : undefined,
         gasPrice: query.gasPrice !== undefined ? new BigNumber(query.gasPrice) : undefined,
-        numSamples: query.numSamples !== undefined ? parseInt(query.numSamples) : undefined,
+        numSamples: 50,
         runLimit: query.runLimit !== undefined ? parseInt(query.runLimit) : undefined,
         excludedSources: (query.excludedSources || '').split(',').map(s => (s === '0x' ? 'Native' : s)),
     };
@@ -123,12 +136,12 @@ function convertSourceBreakdownToArray(sourceBreakdown) {
             );
             obj = {
                 name: `MultiHop (${breakdown.hops}) via ${intermediateToken || breakdown.intermediateToken}`,
-                proportion: new BigNumber(breakdown.proportion).toPrecision(2),
+                proportion: new BigNumber(breakdown.proportion).toPrecision(6),
             };
         } else {
             obj = {
                 name: source,
-                proportion: new BigNumber(breakdown).toPrecision(2),
+                proportion: new BigNumber(breakdown).toPrecision(6),
             };
         }
         return [...acc, obj];

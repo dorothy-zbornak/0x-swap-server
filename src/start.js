@@ -21,7 +21,6 @@ const ARGV = yargs
     .option('pool', { type: 'string' })
     .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
     .option('samples', { alias: 's', type: 'number', default: 13 })
-    .option('dist', { alias: 'd', type: 'number', default: 1.05 })
     .argv;
 
 const SRA_API_URL = 'https://api.0x.org/sra';
@@ -31,7 +30,7 @@ const DEFAULT_MARKET_OPTS = {
     bridgeSlippage: 0.01,
     maxFallbackSlippage: 0.015,
     numSamples: ARGV.samples,
-    sampleDistributionBase: ARGV.dist,
+    sampleDistributionParameters: { alpha: 1, beta: 1 },
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
     gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V1,
@@ -103,10 +102,7 @@ function createQuoter(provider, orderbook) {
     const swapQuoter = new SwapQuoter(
         provider,
         orderbook,
-        {
-            ...SWAP_QUOTER_OPTS,
-            tokenAdjacencyGraph: TOKEN_ADJACENCY_GRAPH,
-        },
+        SWAP_QUOTER_OPTS,
     );
     return async (opts) => {
         console.log(`dev: ${JSON.stringify(opts)}`);
