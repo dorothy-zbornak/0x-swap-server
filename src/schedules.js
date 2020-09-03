@@ -35,6 +35,7 @@ const GAS_SCHEDULE_V0 = {
     },
     [ERC20BridgeSource.Balancer]: () => 4.5e5,
     [ERC20BridgeSource.MStable]: () => 8.5e5,
+    [ERC20BridgeSource.Mooniswap]: () => 3.5e5,
 };
 
 const GAS_SCHEDULE_V1 = {
@@ -71,6 +72,16 @@ const GAS_SCHEDULE_V1 = {
     },
     [ERC20BridgeSource.Balancer]: () => 1.5e5,
     [ERC20BridgeSource.MStable]: () => 7e5,
+    [ERC20BridgeSource.Mooniswap]: () => 2.2e5,
+    [ERC20BridgeSource.MultiHop]: fillData => {
+        const firstHop = fillData.firstHopSource;
+        const secondHop = fillData.secondHopSource;
+        const firstHopGas =
+            GAS_SCHEDULE_V1[firstHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[firstHop.source](firstHop.fillData);
+        const secondHopGas =
+            GAS_SCHEDULE_V1[secondHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[secondHop.source](secondHop.fillData);
+        return new BigNumber(firstHopGas).plus(secondHopGas).toNumber();
+    },
 };
 
 const FEE_SCHEDULE_V0 = Object.assign(
