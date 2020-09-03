@@ -93,7 +93,7 @@ const FEE_SCHEDULE_V0 = Object.assign(
 
 const FEE_SCHEDULE_V1 = Object.assign(
     {},
-    ...Object.keys(GAS_SCHEDULE_V0).map(k => ({
+    ...Object.keys(GAS_SCHEDULE_V1).map(k => ({
         [k]:
             k === ERC20BridgeSource.Native
                 ? fillData => new BigNumber(PROTOCOL_FEE).plus(GAS_SCHEDULE_V1[k](fillData))
