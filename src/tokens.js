@@ -63,5 +63,9 @@ module.exports = {
     'SNX': {
         decimals: 18,
         address: '0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f',
-    }
+    },
+    'CRV': {
+        decimals: 18,
+        address: '0xD533a949740bb3306d119CC777fa900bA034cd52',
+    },
 };

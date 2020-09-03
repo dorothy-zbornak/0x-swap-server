@@ -128,7 +128,9 @@ function convertSourceBreakdownToArray(sourceBreakdown) {
                 ...acc,
                 {
                     name: source === 'Native' ? '0x' : source,
-                    proportion: new BigNumber(percentage.toPrecision(2)),
+                    proportion: source !== 'MultiHop'
+                        ? new BigNumber(percentage.toPrecision(2))
+                        : new BigNumber(percentage.proportion.toPrecision(2)),
                 },
             ];
         },
