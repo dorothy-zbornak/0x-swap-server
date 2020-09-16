@@ -1,5 +1,5 @@
 'use strict'
-const { SwapQuoteConsumer } = require('@0x/asset-swapper');
+const { ERC20BridgeSource, SwapQuoteConsumer } = require('@0x/asset-swapper');
 const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses');
 const BigNumber = require('bignumber.js');
 const express = require('express');
@@ -59,10 +59,10 @@ class Server {
                         gas: quote.worstCaseQuoteInfo.gas || 0,
                         gasPrice: quote.gasPrice,
                         orders: cleanSignedOrderFields(quote.orders),
-                        sources: convertSourceBreakdownToArray(quote.sourceBreakdown),
+                        sources: createSourceBreakdown(quote),
                         buyAmount: quote.bestCaseQuoteInfo.makerAssetAmount,
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAssetAmount,
-                        protocolFee: quote.worstCaseQuoteInfo.protocolFeeInWeiAmount,
+                        protocolFee: getquoteProtocolFee(quote, opts.v0),
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
                         maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAssetAmount,
@@ -91,6 +91,16 @@ class Server {
     }
 }
 
+function getquoteProtocolFee(quote, v0 = false) {
+    if (v0) {
+        return quote.worstCaseQuoteInfo.protocolFeeInWeiAmount;
+    }
+    const feePerOrder = quote.worstCaseQuoteInfo.protocolFeeInWeiAmount.div(quote.orders.length);
+    // Only native orders have protocol fees.
+    const nativeOrders = quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native);
+    return feePerOrder.times(nativeOrders.length);
+}
+
 function createQuoterOpts(query) {
     let { buyToken, sellToken, buyAmount, sellAmount } = query;
     if (!buyAmount && !sellAmount) {
@@ -108,7 +118,8 @@ function createQuoterOpts(query) {
         gasPrice: query.gasPrice !== undefined ? new BigNumber(query.gasPrice) : undefined,
         numSamples: query.numSamples !== undefined ? parseInt(query.numSamples) : undefined,
         runLimit: query.runLimit !== undefined ? parseInt(query.runLimit) : undefined,
-        excludedSources: (query.excludedSources || '').split(',').map(s => s === '0x' ? 'Native' : s),
+        excludedSources: (query.excludedSources || '').split(',').filter(s => s).map(s => s === '0x' ? 'Native' : s),
+        includedSources: (query.includedSources || '').split(',').filter(s => s).map(s => s === '0x' ? 'Native' : s),
         takerAddress: query.takerAddress,
     };
 }
@@ -121,8 +132,8 @@ function getPrice(side, buyToken, sellToken, quoteInfo) {
     return side === 'sell' ? price : price.pow(-1);
 }
 
-function convertSourceBreakdownToArray(sourceBreakdown) {
-    return Object.entries(sourceBreakdown).reduce(
+function createSourceBreakdown(quote) {
+    const breakdown = Object.entries(quote.sourceBreakdown).reduce(
         (acc, [source, percentage]) => {
             return [
                 ...acc,
@@ -136,6 +147,19 @@ function convertSourceBreakdownToArray(sourceBreakdown) {
         },
         [],
     );
+    for (const s of breakdown) {
+        if (s.name === 'Uniswap_V2' || s.name === 'SushiSwap') {
+            for (const o of quote.orders) {
+                if (o.fills[0].source === s.name) {
+                    const { tokenAddressPath } = o.fills[0].fillData;
+                    s.tokenAddressPath = tokenAddressPath;
+                    break;
+                }
+            }
+        }
+        break;
+    }
+    return breakdown;
 }
 
 function cleanSignedOrderFields(orders) {

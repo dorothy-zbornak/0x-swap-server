@@ -33,6 +33,13 @@ const GAS_SCHEDULE_V0 = {
         }
         return gas;
     },
+    [ERC20BridgeSource.SushiSwap]: fillData => {
+        let gas = 3e5;
+        if (fillData.tokenAddressPath.length > 2) {
+            gas += 5e4;
+        }
+        return gas;
+    },
     [ERC20BridgeSource.Balancer]: () => 4.5e5,
     [ERC20BridgeSource.MStable]: () => 8.5e5,
     [ERC20BridgeSource.Mooniswap]: () => 3.5e5,
@@ -70,12 +77,22 @@ const GAS_SCHEDULE_V1 = {
         }
         return gas;
     },
+    [ERC20BridgeSource.SushiSwap]: fillData => {
+        let gas = 1.5e5;
+        if (fillData.tokenAddressPath.length > 2) {
+            gas += 5e4;
+        }
+        return gas;
+    },
     [ERC20BridgeSource.Balancer]: () => 1.5e5,
     [ERC20BridgeSource.MStable]: () => 7e5,
     [ERC20BridgeSource.Mooniswap]: () => 2.2e5,
     [ERC20BridgeSource.MultiHop]: fillData => {
         const firstHop = fillData.firstHopSource;
         const secondHop = fillData.secondHopSource;
+        if (!firstHop || !secondHop) {
+            return 0;
+        }
         const firstHopGas =
             GAS_SCHEDULE_V1[firstHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[firstHop.source](firstHop.fillData);
         const secondHopGas =

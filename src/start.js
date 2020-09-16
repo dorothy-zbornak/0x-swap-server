@@ -33,6 +33,7 @@ const RFQT_OPTS = ARGV.rfqtConfig ? JSON.parse(fs.readFileSync(ARGV.rfqtConfig))
 const SRA_API_URL = 'https://api.0x.org/sra';
 const DEFAULT_MARKET_OPTS = {
     excludedSources: [],
+    includedSources: [],
     runLimit: ARGV.runLimit,
     bridgeSlippage: 0.01,
     maxFallbackSlippage: 0.015,
