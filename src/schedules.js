@@ -90,9 +90,6 @@ const GAS_SCHEDULE_V1 = {
     [ERC20BridgeSource.MultiHop]: fillData => {
         const firstHop = fillData.firstHopSource;
         const secondHop = fillData.secondHopSource;
-        if (!firstHop || !secondHop) {
-            return 0;
-        }
         const firstHopGas =
             GAS_SCHEDULE_V1[firstHop.source] === undefined ? 0 : GAS_SCHEDULE_V1[firstHop.source](firstHop.fillData);
         const secondHopGas =
