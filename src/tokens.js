@@ -68,4 +68,8 @@ module.exports = {
         decimals: 18,
         address: '0xD533a949740bb3306d119CC777fa900bA034cd52',
     },
+    'SWRV': {
+        decimals: 18,
+        address: '0xB8BAa0e4287890a5F79863aB62b7F175ceCbD433',
+    },
 };

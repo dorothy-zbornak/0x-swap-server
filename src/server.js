@@ -107,10 +107,10 @@ function createQuoterOpts(query) {
         throw new Error('No buy or sell a mount specified');
     }
     return {
-        buyToken,
-        sellToken,
-        buyTokenAddress: TOKENS[buyToken].address,
-        sellTokenAddress: TOKENS[sellToken].address,
+        buyToken: getTokenSymbol(buyToken),
+        sellToken: getTokenSymbol(sellToken),
+        buyTokenAddress: getToken(buyToken).address,
+        sellTokenAddress: getToken(sellToken).address,
         buyAmount: buyAmount !== undefined ? new BigNumber(buyAmount) : undefined,
         sellAmount: sellAmount !== undefined ? new BigNumber(sellAmount) : undefined,
         bridgeSlippage: query.bridgeSlippage !== undefined ? parseFloat(query.bridgeSlippage) : undefined,
@@ -124,9 +124,23 @@ function createQuoterOpts(query) {
     };
 }
 
+function getToken(symbolOrAddress) {
+    if (symbolOrAddress.startsWith('0x')) {
+        return Object.values(TOKENS).filter(t => t.address.toLowerCase() === symbolOrAddress.toLowerCase())[0];
+    }
+    return TOKENS[symbolOrAddress];
+}
+
+function getTokenSymbol(symbolOrAddress) {
+    if (symbolOrAddress.startsWith('0x')) {
+        return Object.keys(TOKENS).filter((s) => TOKENS[s].address.toLowerCase() === symbolOrAddress.toLowerCase())[0];
+    }
+    return symbolOrAddress;
+}
+
 function getPrice(side, buyToken, sellToken, quoteInfo) {
-    const buyDecimals = TOKENS[buyToken].decimals;
-    const sellDecimals = TOKENS[sellToken].decimals;
+    const buyDecimals = getToken(buyToken).decimals;
+    const sellDecimals = getToken(sellToken).decimals;
     const price = quoteInfo.makerAssetAmount.div(10**buyDecimals)
         .div(quoteInfo.totalTakerAssetAmount.div(10**sellDecimals));
     return side === 'sell' ? price : price.pow(-1);
