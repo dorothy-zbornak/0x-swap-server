@@ -54,7 +54,13 @@ class Server {
                             quote.bestCaseQuoteInfo,
                         ),
                         to: toAddress,
-                        value: adjustQuoteEthValue(quote, ethAmount),
+                        value: adjustQuoteEthValue(
+                            quote,
+                            req.query.sellToken === 'ETH'
+                                ? quote.worstCaseQuoteInfo.totalTakerAssetAmount
+                                : 0,
+                            opts.v0,
+                        ),
                         data: callData,
                         gas: quote.worstCaseQuoteInfo.gas || 0,
                         gasPrice: quote.gasPrice,
@@ -91,12 +97,13 @@ class Server {
     }
 }
 
-function adjustQuoteEthValue(quote, ethAmount) {
+function adjustQuoteEthValue(quote, ethSellAmount, isV0) {
+    if (isV0) {
+        return quote.value;
+    }
     const FEE_PER_ORDER = quote.gasPrice.times(70e3);
-    const payment = ethAmount.minus(FEE_PER_ORDER.times(quote.orders.length));
-    return FEE_PER_ORDER.times(
-        quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native).length,
-    ).plus(payment);
+    const numNativeOrders = quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native).length;
+    return FEE_PER_ORDER.times(numNativeOrders).plus(ethSellAmount);
 }
 
 function getquoteProtocolFee(quote, v0 = false) {
