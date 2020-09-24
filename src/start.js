@@ -115,7 +115,14 @@ function createQuoter(provider, orderbook) {
         const marketOpts = mergeOpts(
             DEFAULT_MARKET_OPTS,
             opts,
-            { rfqt: { takerAddress: opts.takerAddress, isIndicative: !!opts.takerAddress } },
+            {
+                rfqt: {
+                    takerAddress: ARGV.v0
+                        ? opts.takerAddress
+                        : addresses.exchangeProxyFlashWallet,
+                    intentOnFilling: !!opts.takerAddress,
+                },
+            },
         );
         if (opts.buyAmount) {
             return swapQuoter.getMarketBuySwapQuoteAsync(
