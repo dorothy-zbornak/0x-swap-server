@@ -54,7 +54,7 @@ class Server {
                             quote.bestCaseQuoteInfo,
                         ),
                         to: toAddress,
-                        value: ethAmount,
+                        value: adjustQuoteEthValue(quote, ethAmount),
                         data: callData,
                         gas: quote.worstCaseQuoteInfo.gas || 0,
                         gasPrice: quote.gasPrice,
@@ -89,6 +89,14 @@ class Server {
             );
         });
     }
+}
+
+function adjustQuoteEthValue(quote, ethAmount) {
+    const FEE_PER_ORDER = quote.gasPrice.times(70e3);
+    const payment = ethAmount.minus(FEE_PER_ORDER.times(quote.orders.length));
+    return FEE_PER_ORDER.times(
+        quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native).length,
+    );
 }
 
 function getquoteProtocolFee(quote, v0 = false) {

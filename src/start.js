@@ -9,6 +9,7 @@ const yargs = require('yargs');
 const _ = require('lodash');
 const fs = require('fs');
 
+const TOKENS = require('./tokens');
 const { Server } = require('./server');
 const { addresses } = require('./addresses');
 const {
@@ -48,6 +49,7 @@ const DEFAULT_MARKET_OPTS = {
         makerEndpointMaxResponseTimeMs: 600,
     },
 };
+const INTERMEDIATE_TOKENS = ['WETH','DAI','USDC','WBTC'];
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
     liquidityProviderRegistryAddress: ARGV.pool,
@@ -58,6 +60,15 @@ const SWAP_QUOTER_OPTS = {
         makerAssetOfferings: RFQT_OPTS.offerings || [],
         infoLogger: () => {},
     },
+    tokenAdjacencyGraph: Object.assign(
+        ...Object.values(TOKENS).map(
+            t => ({
+                [t.address]: INTERMEDIATE_TOKENS
+                    .filter(s => TOKENS[s].address !== t.address)
+                    .map(s => TOKENS[s].address)
+            }),
+        ),
+    ),
 };
 
 (async() => {

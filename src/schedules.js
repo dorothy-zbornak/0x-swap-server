@@ -72,16 +72,20 @@ const GAS_SCHEDULE_V1 = {
     },
     [ERC20BridgeSource.MultiBridge]: () => 3.5e5,
     [ERC20BridgeSource.UniswapV2]: fillData => {
-        let gas = 1.5e5;
-        if (fillData.tokenAddressPath.length > 2) {
-            gas += 5e4;
+        // TODO: Different base cost if to/from ETH.
+        let gas = 100e3;
+        const path = fillData.tokenAddressPath;
+        if (path.length > 2) {
+            gas += Math.max(0, path.length - 2) * 50e3; // +50k for each hop.
         }
         return gas;
     },
     [ERC20BridgeSource.SushiSwap]: fillData => {
-        let gas = 1.5e5;
-        if (fillData.tokenAddressPath.length > 2) {
-            gas += 5e4;
+        // TODO: Different base cost if to/from ETH.
+        let gas = 105e3;
+        const path = fillData.tokenAddressPath;
+        if (path.length > 2) {
+            gas += Math.max(0, path.length - 2) * 50e3; // +50k for each hop.
         }
         return gas;
     },
