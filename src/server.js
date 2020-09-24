@@ -149,8 +149,8 @@ function getTokenSymbol(symbolOrAddress) {
 function getPrice(side, buyToken, sellToken, quoteInfo) {
     const buyDecimals = getToken(buyToken).decimals;
     const sellDecimals = getToken(sellToken).decimals;
-    const price = quoteInfo.makerAssetAmount.div(10**buyDecimals)
-        .div(quoteInfo.totalTakerAssetAmount.div(10**sellDecimals));
+    const price = quoteInfo.makerAssetAmount.div(`1e${buyDecimals}`)
+        .div(quoteInfo.totalTakerAssetAmount.div(`1e${sellDecimals}`));
     return side === 'sell' ? price : price.pow(-1);
 }
 
