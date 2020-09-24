@@ -96,7 +96,7 @@ function adjustQuoteEthValue(quote, ethAmount) {
     const payment = ethAmount.minus(FEE_PER_ORDER.times(quote.orders.length));
     return FEE_PER_ORDER.times(
         quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native).length,
-    );
+    ).plus(payment);
 }
 
 function getquoteProtocolFee(quote, v0 = false) {
