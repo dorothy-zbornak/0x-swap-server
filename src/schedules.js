@@ -43,6 +43,7 @@ const GAS_SCHEDULE_V0 = {
     [ERC20BridgeSource.Balancer]: () => 4.5e5,
     [ERC20BridgeSource.MStable]: () => 8.5e5,
     [ERC20BridgeSource.Mooniswap]: () => 3.5e5,
+    [ERC20BridgeSource.Swerve]: () => 1.5e5,
 };
 
 const GAS_SCHEDULE_V1 = {
@@ -50,7 +51,7 @@ const GAS_SCHEDULE_V1 = {
     [ERC20BridgeSource.Uniswap]: () => 1.1e5,
     [ERC20BridgeSource.LiquidityProvider]: () => 1.3e5,
     [ERC20BridgeSource.Eth2Dai]: () => 4e5,
-    [ERC20BridgeSource.Kyber]: () => 6e5,
+    [ERC20BridgeSource.Kyber]: () => 5e5,
     [ERC20BridgeSource.Curve]: fillData => {
         switch (fillData.curve.poolAddress.toLowerCase()) {
             case '0xa5407eae9ba41422680e2e00537571bcc53efbfd':
@@ -76,7 +77,7 @@ const GAS_SCHEDULE_V1 = {
         let gas = 100e3;
         const path = fillData.tokenAddressPath;
         if (path.length > 2) {
-            gas += Math.max(0, path.length - 2) * 50e3; // +50k for each hop.
+            gas += (path.length - 2) * 50e3; // +50k for each hop.
         }
         return gas;
     },
@@ -85,13 +86,14 @@ const GAS_SCHEDULE_V1 = {
         let gas = 105e3;
         const path = fillData.tokenAddressPath;
         if (path.length > 2) {
-            gas += Math.max(0, path.length - 2) * 50e3; // +50k for each hop.
+            gas += (path.length - 2) * 50e3; // +50k for each hop.
         }
         return gas;
     },
     [ERC20BridgeSource.Balancer]: () => 1.5e5,
     [ERC20BridgeSource.MStable]: () => 7e5,
     [ERC20BridgeSource.Mooniswap]: () => 2.2e5,
+    [ERC20BridgeSource.Swerve]: () => 1.5e5,
     [ERC20BridgeSource.MultiHop]: fillData => {
         const firstHop = fillData.firstHopSource;
         const secondHop = fillData.secondHopSource;
