@@ -42,7 +42,7 @@ const DEFAULT_MARKET_OPTS = {
     sampleDistributionBase: ARGV.dist,
     allowFallback: true,
     feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
-    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : FEE_SCHEDULE_V1,
+    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : GAS_SCHEDULE_V1,
     shouldBatchBridgeOrders: ARGV.v0 ? true : false,
     rfqt: {
         apiKey: RFQT_OPTS.apiKey,

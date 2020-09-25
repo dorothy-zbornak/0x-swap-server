@@ -103,7 +103,6 @@ function adjustQuoteEthValue(quote, ethSellAmount, isV0) {
     }
     const FEE_PER_ORDER = quote.gasPrice.times(70e3);
     const numNativeOrders = quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native).length;
-    console.log(`num native:`, numNativeOrders, `eth value:`, ethSellAmount);
     return FEE_PER_ORDER.times(numNativeOrders).plus(ethSellAmount);
 }
 
