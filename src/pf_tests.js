@@ -65,11 +65,12 @@ const SWAP_QUOTER_OPTS = {
     ),
 };
 
-const FEE_STOPS = [50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 500];
-const GAS_STOPS = [10, 50, 100, 150, 200, 300, 400, 500];
+const FEE_STOPS = createLinearStops(25, 500, 32)
+const GAS_STOPS = createLinearStops(1, 500, 32)
 const SIZE_STOPS = [100, 500, 1e3, 10e3, 25e3, 50e3, 100e3, 250e3];
 const SAMPLE_PAIRS = ['WETH/DAI', 'WETH/USDC'];
 const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
+console.log(GAS_STOPS, FEE_STOPS);
 
 (async() => {
     const provider = createZeroExProvider(process.env.NODE_RPC);
@@ -139,6 +140,11 @@ const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
         await sleep(5);
     }
 })();
+
+function createLinearStops(min, max, count) {
+    const d = (max - min) / count;
+    return [...[...new Array(count)].map((v, i) => min + d * i), max];
+}
 
 function sleep(secs) {
     return new Promise((accept) => {
