@@ -65,12 +65,20 @@ const SWAP_QUOTER_OPTS = {
     ),
 };
 
-const FEE_STOPS = createLinearStops(25, 500, 32)
-const GAS_STOPS = createLinearStops(1, 500, 32)
+const GAS_STOPS = createLinearStops(1, 500, 16);
+const FEE_STOPS = createLinearStops(25e3, 500e3, 16);
+const COST_STOPS = (() => {
+    const r = [];
+    for (const g of GAS_STOPS) {
+        for (const f of FEE_STOPS) {
+            r.push([g, f]);
+        }
+    }
+    return r;
+})();
 const SIZE_STOPS = [100, 500, 1e3, 10e3, 25e3, 50e3, 100e3, 250e3];
 const SAMPLE_PAIRS = ['WETH/DAI', 'WETH/USDC'];
 const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
-console.log(GAS_STOPS, FEE_STOPS);
 
 (async() => {
     const provider = createZeroExProvider(process.env.NODE_RPC);
@@ -84,14 +92,13 @@ console.log(GAS_STOPS, FEE_STOPS);
     let resultsBuffer = [];
     while (true) {
         const [makerToken, takerToken] = _.shuffle(_.sample(SAMPLE_PAIRS).split('/'));
-        const gasPrice = Math.round(sampleStops(GAS_STOPS));
-        const fee = Math.round(sampleStops(FEE_STOPS));
+        const [gasPrice, fee] = _.sample(COST_STOPS);
+        const cost = fee * gasPrice;
         const size = sampleStops(SIZE_STOPS);
         const sellAmount = new BigNumber(size)
             .div(TOKEN_PRICES[takerToken])
             .times(`1e${TOKENS[takerToken].decimals}`)
             .integerValue();
-        console.log(gasPrice, fee, size, sellAmount.toString(10));
         let quote;
         try {
             quote = await swapQuoter.getMarketSellSwapQuoteAsync(
@@ -103,7 +110,7 @@ console.log(GAS_STOPS, FEE_STOPS);
                     gasPrice: new BigNumber(gasPrice).times('1e9').integerValue(),
                     feeSchedule: {
                         ...DEFAULT_MARKET_OPTS.feeSchedule,
-                        [ERC20BridgeSource.Native]: () => fee * 1e3,
+                        [ERC20BridgeSource.Native]: () => fee,
                     },
                 }
             );
@@ -137,11 +144,11 @@ console.log(GAS_STOPS, FEE_STOPS);
             await writeResults(resultsBuffer);
             resultsBuffer = [];
         }
-        await sleep(5);
+        await sleep(2.5);
     }
 })();
 
-function createLinearStops(min, max, count) {
+function createLinearStops(min, max, count=32) {
     const d = (max - min) / count;
     return [...[...new Array(count)].map((v, i) => min + d * i), max];
 }
