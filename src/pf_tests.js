@@ -67,15 +67,6 @@ const SWAP_QUOTER_OPTS = {
 
 const GAS_STOPS = createLinearStops(1, 500, 16);
 const FEE_STOPS = createLinearStops(25e3, 500e3, 16);
-const COST_STOPS = (() => {
-    const r = [];
-    for (const g of GAS_STOPS) {
-        for (const f of FEE_STOPS) {
-            r.push([g, f]);
-        }
-    }
-    return r;
-})();
 const SIZE_STOPS = [100, 500, 1e3, 10e3, 25e3, 50e3, 100e3, 250e3];
 const SAMPLE_PAIRS = ['WETH/DAI', 'WETH/USDC'];
 const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
@@ -89,11 +80,12 @@ const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
         SWAP_QUOTER_OPTS,
     );
 
+    const weights = [];
     let resultsBuffer = [];
     while (true) {
         const [makerToken, takerToken] = _.shuffle(_.sample(SAMPLE_PAIRS).split('/'));
-        const [gasPrice, fee] = _.sample(COST_STOPS);
-        const cost = fee * gasPrice;
+        const gasPrice = sampleStops(GAS_STOPS);
+        const fee = sampleStops(FEE_STOPS);
         const size = sampleStops(SIZE_STOPS);
         const sellAmount = new BigNumber(size)
             .div(TOKEN_PRICES[takerToken])
