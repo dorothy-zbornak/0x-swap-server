@@ -38,8 +38,9 @@ def bin_columns(rows, col, count=32):
     for r in rows:
         v = r[col]
         for lo, hi in reversed(bins):
-            if v >= lo:
-                v = lo
+            q = round((v - lo) / (hi - lo))
+            if abs(q) <= 1:
+                v = q * (hi - lo) + lo
                 break
         results.append({ **r, col: v })
     for (lo, hi) in reversed(bins):
@@ -50,6 +51,7 @@ def bin_columns(rows, col, count=32):
 ARGS = get_program_args()
 rows = load_rows(ARGS.file)
 rows = bin_columns(rows, 'fee')
+rows = bin_columns(rows, 'gasPrice', 5)
 sns.lineplot(
     data=pd.DataFrame([
             [
@@ -58,13 +60,23 @@ sns.lineplot(
                 r['fee'],
                 r['cost'],
                 r['share']
-            ] for r in rows if abs(r['gasPrice'] - 100) < 100
+            ] for r in rows \
+                # if r['pair'] == 'DAI/WETH' \
+                 # if abs(r['gasPrice'] - 100) < 25
         ],
-        columns=['pair', 'gas_price', 'fee', 'cost', 'share'],
+        columns=['pair', 'gas price', 'fee', 'cost', 'share'],
     ),
     x='fee',
     y='share',
-    hue='pair',
-    palette='Paired'
+    hue='gas price',
+    palette='Paired',
+    ci=66
 )
+for t in plt.gca().get_legend().texts[1:]:
+    t.set_text(str(int(float(t.get_text()))))
+plt.yticks(plt.yticks()[0][1:-1], [f'{int(100 * y)}%' for y in plt.yticks()[0][1:-1]])
+plt.xticks(plt.xticks()[0][1:-1], [f'{int(x / 1e3)}K' for x in plt.xticks()[0][1:-1]])
+plt.ylabel('share of quote');
+plt.xlabel('RFQT order gas + fee')
+plt.title(f'RFQT share of quote volume ({len(rows)} quotes)')
 plt.show()

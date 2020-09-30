@@ -136,7 +136,7 @@ const TOKEN_PRICES = {WETH: 364, DAI: 1.01, USDC: 1};
             await writeResults(resultsBuffer);
             resultsBuffer = [];
         }
-        await sleep(2.5);
+        await sleep(3);
     }
 })();
 
