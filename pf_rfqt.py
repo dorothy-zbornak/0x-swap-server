@@ -70,7 +70,7 @@ sns.lineplot(
     y='share',
     hue='gas price',
     palette='Paired',
-    ci=66
+    ci=68
 )
 for t in plt.gca().get_legend().texts[1:]:
     t.set_text(str(int(float(t.get_text()))))
