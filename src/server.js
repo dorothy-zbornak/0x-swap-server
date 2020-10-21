@@ -32,18 +32,13 @@ class Server {
                         allowanceTarget,
                     } = await this._quoteConsumer.getCalldataOrThrowAsync(
                         quote,
-                        !opts.v0
-                            ? {
-                                useExtensionContract: 'EXCHANGE_PROXY',
-                                extensionContractOpts: {
-                                    isFromETH: req.query.sellToken === 'ETH',
-                                    isToETH: req.query.buyToken === 'ETH',
-                                },
-                            }
-                            : {
-                                useExtensionContract: req.query.sellToken === 'ETH'
-                                    ? 'FORWARDER' : 'NONE',
+                        {
+                            useExtensionContract: 'EXCHANGE_PROXY',
+                            extensionContractOpts: {
+                                isFromETH: req.query.sellToken === 'ETH',
+                                isToETH: req.query.buyToken === 'ETH',
                             },
+                        },
                     );
                     res.json({
                         allowanceTarget,
@@ -59,7 +54,6 @@ class Server {
                             req.query.sellToken === 'ETH'
                                 ? quote.worstCaseQuoteInfo.totalTakerAssetAmount
                                 : 0,
-                            opts.v0,
                         ),
                         data: callData,
                         gas: quote.worstCaseQuoteInfo.gas || 0,
@@ -68,7 +62,7 @@ class Server {
                         sources: createSourceBreakdown(quote),
                         buyAmount: quote.bestCaseQuoteInfo.makerAssetAmount,
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAssetAmount,
-                        protocolFee: getquoteProtocolFee(quote, opts.v0),
+                        protocolFee: getquoteProtocolFee(quote),
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
                         maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAssetAmount,
@@ -106,10 +100,7 @@ function adjustQuoteEthValue(quote, ethSellAmount, isV0) {
     return FEE_PER_ORDER.times(numNativeOrders).plus(ethSellAmount);
 }
 
-function getquoteProtocolFee(quote, v0 = false) {
-    if (v0) {
-        return quote.worstCaseQuoteInfo.protocolFeeInWeiAmount;
-    }
+function getquoteProtocolFee(quote) {
     const feePerOrder = quote.worstCaseQuoteInfo.protocolFeeInWeiAmount.div(quote.orders.length);
     // Only native orders have protocol fees.
     const nativeOrders = quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native);
@@ -124,8 +115,8 @@ function createQuoterOpts(query) {
     return {
         buyToken: getTokenSymbol(buyToken),
         sellToken: getTokenSymbol(sellToken),
-        buyTokenAddress: getToken(buyToken).address,
-        sellTokenAddress: getToken(sellToken).address,
+        buyTokenAddress: buyToken === 'ETH' ? TOKENS.WETH.address : getToken(buyToken).address,
+        sellTokenAddress: sellToken === 'ETH' ? TOKENS.WETH.address : getToken(sellToken).address,
         buyAmount: buyAmount !== undefined ? new BigNumber(buyAmount) : undefined,
         sellAmount: sellAmount !== undefined ? new BigNumber(sellAmount) : undefined,
         bridgeSlippage: query.bridgeSlippage !== undefined ? parseFloat(query.bridgeSlippage) : undefined,

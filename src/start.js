@@ -13,15 +13,14 @@ const TOKENS = require('./tokens');
 const { Server } = require('./server');
 const { addresses } = require('./addresses');
 const {
-    FEE_SCHEDULE_V0,
-    FEE_SCHEDULE_V1,
-    GAS_SCHEDULE_V0,
-    GAS_SCHEDULE_V1
-} = require('./schedules');
+    DEFAULT_MARKET_OPTS,
+    GAS_STATION_URL,
+    INTERMEDIATE_TOKENS,
+    SRA_API_URL,
+} = require('./constants');
 
 const ARGV = yargs
     .option('port', { alias: 'p', type: 'number', default: 7001 })
-    .option('v0', { type: 'boolean' })
     .option('pool', { alias: 'l', type: 'string' })
     .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
     .option('samples', { alias: 's', type: 'number', default: 13 })
@@ -30,31 +29,12 @@ const ARGV = yargs
     .argv;
 
 const RFQT_OPTS = ARGV.rfqtConfig ? JSON.parse(fs.readFileSync(ARGV.rfqtConfig)) : {};
-
-const SRA_API_URL = 'https://api.0x.org/sra';
-const DEFAULT_MARKET_OPTS = {
-    excludedSources: [],
-    includedSources: [],
-    runLimit: ARGV.runLimit,
-    bridgeSlippage: 0.01,
-    maxFallbackSlippage: 0.015,
-    numSamples: ARGV.samples,
-    sampleDistributionBase: ARGV.dist,
-    allowFallback: true,
-    feeSchedule: ARGV.v0 ? FEE_SCHEDULE_V0 : FEE_SCHEDULE_V1,
-    gasSchedule: ARGV.v0 ? GAS_SCHEDULE_V0 : GAS_SCHEDULE_V1,
-    shouldBatchBridgeOrders: ARGV.v0 ? true : false,
-    rfqt: {
-        apiKey: RFQT_OPTS.apiKey,
-        makerEndpointMaxResponseTimeMs: 600,
-    },
-};
-const INTERMEDIATE_TOKENS = ['WETH','DAI','USDC','WBTC'];
 const SWAP_QUOTER_OPTS = {
     chainId: 1,
     liquidityProviderRegistryAddress: ARGV.pool,
     expiryBufferMs: 60 * 1000,
     contractAddresses: addresses,
+    ethGasStationUrl: GAS_STATION_URL,
     rfqt: {
         takerApiKeyWhitelist: RFQT_OPTS.apiKey ? [RFQT_OPTS.apiKey] : [],
         makerAssetOfferings: RFQT_OPTS.offerings || [],
@@ -100,10 +80,6 @@ function createZeroExProvider(rpcHost) {
     };
 }
 
-function mergeOpts(...opts) {
-    return _.merge({}, ...opts);
-}
-
 function createQuoter(provider, orderbook) {
     const swapQuoter = new SwapQuoter(
         provider,
@@ -112,14 +88,19 @@ function createQuoter(provider, orderbook) {
     );
     return async (opts) => {
         console.log(`dev: ${JSON.stringify(opts)}`);
-        const marketOpts = mergeOpts(
+        const marketOpts = _.merge(
+            {},
             DEFAULT_MARKET_OPTS,
+            {
+                runLimit: ARGV.runLimit,
+                samples: ARGV.samples,
+                sampleDistributionBase: ARGV.dist,
+            },
             opts,
             {
                 rfqt: {
-                    takerAddress: ARGV.v0
-                        ? opts.takerAddress
-                        : addresses.exchangeProxyFlashWallet,
+                    apiKey: RFQT_OPTS.apiKey,
+                    takerAddress: addresses.exchangeProxyFlashWallet,
                     intentOnFilling: !!opts.takerAddress,
                 },
             },

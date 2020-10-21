@@ -7,7 +7,10 @@
         "start": "node ./src/start.js"
     },
     "dependencies": {
-        "@0x/asset-swapper": "^4.5.0",
+        "@0x/asset-swapper": "^4.7.0",
+        "@0x/contract-addresses": "^4.12.0",
+        "@0x/contract-wrappers": "^13.9.0",
+        "@0x/orderbook": "^2.2.7",
         "@0x/utils": "5.5.0",
         "bignumber.js": "^9.0.0",
         "colors": "^1.4.0",
