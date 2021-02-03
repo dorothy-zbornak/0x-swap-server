@@ -7,15 +7,16 @@ const TOKENS = require('./tokens');
 
 class Server {
     constructor(provider, addresses) {
+        this._addresses = addresses || getContractAddressesForChainOrThrow(1);
+        this._app = express();
+        this._app.use(express.json());
         this._quoteConsumer = new SwapQuoteConsumer(
             provider,
             {
                 chainId: 1,
-                contractAddresses: addresses || getContractAddressesForChainOrThrow(1),
+                contractAddresses: this._addresses,
             },
         );
-        this._app = express();
-        this._app.use(express.json());
     }
 
     addQuoteEndpoint(endpoint, quoter, opts = {}) {
@@ -29,7 +30,6 @@ class Server {
                         calldataHexString: callData,
                         toAddress,
                         ethAmount,
-                        allowanceTarget,
                     } = await this._quoteConsumer.getCalldataOrThrowAsync(
                         quote,
                         {
@@ -41,7 +41,7 @@ class Server {
                         },
                     );
                     res.json({
-                        allowanceTarget,
+                        allowanceTarget: this._addresses.exchangeProxy,
                         price: getPrice(
                             quoterOpts.buyAmount ? 'buy' : 'sell',
                             quoterOpts.buyToken,
@@ -62,7 +62,7 @@ class Server {
                         sources: createSourceBreakdown(quote),
                         buyAmount: quote.bestCaseQuoteInfo.makerAssetAmount,
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAssetAmount,
-                        protocolFee: getquoteProtocolFee(quote),
+                        protocolFee: getQuoteProtocolFee(quote),
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
                         maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAssetAmount,
@@ -100,7 +100,7 @@ function adjustQuoteEthValue(quote, ethSellAmount, isV0) {
     return FEE_PER_ORDER.times(numNativeOrders).plus(ethSellAmount);
 }
 
-function getquoteProtocolFee(quote) {
+function getQuoteProtocolFee(quote) {
     const feePerOrder = quote.worstCaseQuoteInfo.protocolFeeInWeiAmount.div(quote.orders.length);
     // Only native orders have protocol fees.
     const nativeOrders = quote.orders.filter(o => o.fills[0].source === ERC20BridgeSource.Native);

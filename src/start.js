@@ -1,7 +1,7 @@
 'use strict'
 require('colors');
 const Web3 = require('web3');
-const { SwapQuoter } = require('@0x/asset-swapper');
+const { SwapQuoter, OrderPrunerPermittedFeeTypes } = require('@0x/asset-swapper');
 const { Orderbook } = require('@0x/orderbook');
 const BigNumber = require('bignumber.js');
 const process = require('process');
@@ -33,22 +33,17 @@ const SWAP_QUOTER_OPTS = {
     chainId: 1,
     liquidityProviderRegistryAddress: ARGV.pool,
     expiryBufferMs: 60 * 1000,
-    contractAddresses: addresses,
+    // contractAddresses: addresses,
     ethGasStationUrl: GAS_STATION_URL,
     rfqt: {
         takerApiKeyWhitelist: RFQT_OPTS.apiKey ? [RFQT_OPTS.apiKey] : [],
         makerAssetOfferings: RFQT_OPTS.offerings || [],
         infoLogger: () => {},
     },
-    tokenAdjacencyGraph: Object.assign(
-        ...Object.values(TOKENS).map(
-            t => ({
-                [t.address]: INTERMEDIATE_TOKENS
-                    .filter(s => TOKENS[s].address !== t.address)
-                    .map(s => TOKENS[s].address)
-            }),
-        ),
-    ),
+    tokenAdjacencyGraph: {
+        default: INTERMEDIATE_TOKENS.map(t => TOKENS[t].address),
+    },
+    permittedOrderFEeTypes: new Set([OrderPrunerPermittedFeeTypes.NoFees]),
 };
 
 (async() => {
