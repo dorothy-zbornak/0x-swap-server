@@ -1,6 +1,7 @@
 'use strict'
 const { ERC20BridgeSource, SwapQuoteConsumer } = require('@0x/asset-swapper');
 const { getContractAddressesForChainOrThrow } = require('@0x/contract-addresses');
+const { FillQuoteTransformerOrderType } = require('@0x/protocol-utils');
 const BigNumber = require('bignumber.js');
 const express = require('express');
 const TOKENS = require('./tokens');
@@ -52,20 +53,20 @@ class Server {
                         value: adjustQuoteEthValue(
                             quote,
                             req.query.sellToken === 'ETH'
-                                ? quote.worstCaseQuoteInfo.totalTakerAssetAmount
+                                ? quote.worstCaseQuoteInfo.totalTakerAmount
                                 : 0,
                         ),
                         data: callData,
                         gas: quote.worstCaseQuoteInfo.gas || 0,
                         gasPrice: quote.gasPrice,
-                        orders: cleanSignedOrderFields(quote.orders),
+                        orders: serializeOrdersToOutput(quote.orders),
                         sources: createSourceBreakdown(quote),
-                        buyAmount: quote.bestCaseQuoteInfo.makerAssetAmount,
-                        sellAmount: quote.bestCaseQuoteInfo.totalTakerAssetAmount,
+                        buyAmount: quote.bestCaseQuoteInfo.makerAmount,
+                        sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount,
                         protocolFee: getQuoteProtocolFee(quote),
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
-                        maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAssetAmount,
+                        maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAmount,
                     });
                 } catch (err) {
                     console.error(err);
@@ -147,61 +148,13 @@ function getTokenSymbol(symbolOrAddress) {
 function getPrice(side, buyToken, sellToken, quoteInfo) {
     const buyDecimals = getToken(buyToken).decimals;
     const sellDecimals = getToken(sellToken).decimals;
-    const price = quoteInfo.makerAssetAmount.div(`1e${buyDecimals}`)
-        .div(quoteInfo.totalTakerAssetAmount.div(`1e${sellDecimals}`));
+    const price = quoteInfo.makerAmount.div(`1e${buyDecimals}`)
+        .div(quoteInfo.totalTakerAmount.div(`1e${sellDecimals}`));
     return side === 'sell' ? price : price.pow(-1);
 }
 
-function createSourceBreakdown(quote) {
-    const breakdown = Object.entries(quote.sourceBreakdown).reduce(
-        (acc, [source, percentage]) => {
-            return [
-                ...acc,
-                {
-                    name: source === 'Native' ? '0x' : source,
-                    proportion: source !== 'MultiHop'
-                        ? new BigNumber(percentage.toPrecision(2))
-                        : new BigNumber(percentage.proportion.toPrecision(2)),
-                },
-            ];
-        },
-        [],
-    );
-    for (const s of breakdown) {
-        if (s.name === 'Uniswap_V2' || s.name === 'SushiSwap') {
-            for (const o of quote.orders) {
-                if (o.fills[0].source === s.name) {
-                    const { tokenAddressPath } = o.fills[0].fillData;
-                    s.tokenAddressPath = tokenAddressPath;
-                    break;
-                }
-            }
-        }
-        break;
-    }
-    return breakdown;
-}
-
-function cleanSignedOrderFields(orders) {
-    return orders.map(o => ({
-        chainId: o.chainId,
-        exchangeAddress: o.exchangeAddress,
-        makerAddress: o.makerAddress,
-        takerAddress: o.takerAddress,
-        feeRecipientAddress: o.feeRecipientAddress,
-        senderAddress: o.senderAddress,
-        makerAssetAmount: o.makerAssetAmount,
-        takerAssetAmount: o.takerAssetAmount,
-        makerFee: o.makerFee,
-        takerFee: o.takerFee,
-        expirationTimeSeconds: o.expirationTimeSeconds,
-        salt: o.salt,
-        makerAssetData: o.makerAssetData,
-        takerAssetData: o.takerAssetData,
-        makerFeeAssetData: o.makerFeeAssetData,
-        takerFeeAssetData: o.takerFeeAssetData,
-        signature: o.signature,
-    }));
+function serializeOrdersToOutput(orders) {
+    return orders.map(o => Object.assign({}, o, { fills: undefined }));
 }
 
 module.exports = {

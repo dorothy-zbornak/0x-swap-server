@@ -1,7 +1,7 @@
 'use strict'
 require('colors');
 const Web3 = require('web3');
-const { SwapQuoter, OrderPrunerPermittedFeeTypes } = require('@0x/asset-swapper');
+const { SwapQuoter, MarketOperation, OrderPrunerPermittedFeeTypes } = require('@0x/asset-swapper');
 const { Orderbook } = require('@0x/orderbook');
 const BigNumber = require('bignumber.js');
 const process = require('process');
@@ -101,17 +101,19 @@ function createQuoter(provider, orderbook) {
             },
         );
         if (opts.buyAmount) {
-            return swapQuoter.getMarketBuySwapQuoteAsync(
+            return swapQuoter.getSwapQuoteAsync(
                 opts.buyTokenAddress,
                 opts.sellTokenAddress,
                 opts.buyAmount,
+                MarketOperation.Buy,
                 marketOpts,
             );
         }
-        return swapQuoter.getMarketSellSwapQuoteAsync(
+        return swapQuoter.getSwapQuoteAsync(
             opts.buyTokenAddress,
             opts.sellTokenAddress,
             opts.sellAmount,
+            MarketOperation.Sell,
             marketOpts,
         );
     };
