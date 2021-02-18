@@ -60,7 +60,6 @@ class Server {
                         gas: quote.worstCaseQuoteInfo.gas || 0,
                         gasPrice: quote.gasPrice,
                         orders: serializeOrdersToOutput(quote.orders),
-                        sources: createSourceBreakdown(quote),
                         buyAmount: quote.bestCaseQuoteInfo.makerAmount,
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount,
                         protocolFee: getQuoteProtocolFee(quote),
