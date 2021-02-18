@@ -56,11 +56,16 @@ const SWAP_QUOTER_OPTS = {
 })();
 
 function createOrderbook(sraApiUrl) {
-    return Orderbook.getOrderbookForPollingProvider({
-        httpEndpoint: sraApiUrl,
-        pollingIntervalMs: 10000,
-        perPage: 1000,
-    });
+    // return Orderbook.getOrderbookForPollingProvider({
+    //     httpEndpoint: sraApiUrl,
+    //     pollingIntervalMs: 10000,
+    //     perPage: 1000,
+    // });
+    return {
+        getOrdersAsync() { return []; },
+        getBatchOrdersAsync() { return []; },
+        destroyAsync() {},
+    };
 }
 
 function createZeroExProvider(rpcHost) {

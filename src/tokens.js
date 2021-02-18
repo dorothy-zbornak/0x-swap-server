@@ -131,5 +131,9 @@ module.exports = {
     LEND: {
         decimals: 18,
         address: '0x80fb784b7ed66730e8b1dbd9820afd29931aab03',
-    }
+    },
+    BNB: {
+        decimals: 18,
+        address: '0xB8c77482e45F1F44dE1745F52C74426C631bDD52',
+    },
 };
