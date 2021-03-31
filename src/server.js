@@ -29,7 +29,7 @@ class Server {
         this._app.get(
             endpoint,
             async (req, res) => {
-                const quoterOpts = this._createQuoterOpts(req.query);
+                const quoterOpts = this._createQuoterOpts(req);
                 try {
                     const quote = await quoter(quoterOpts);
                     const {
@@ -93,12 +93,17 @@ class Server {
         });
     }
 
-    _createQuoterOpts(query) {
-        let { buyToken, sellToken, buyAmount, sellAmount } = query;
+    _createQuoterOpts(req) {
+        const query = req.query;
+        let { buyToken, sellToken, buyAmount, sellAmount, gasPrice } = query;
         if (!buyAmount && !sellAmount) {
             throw new Error('No buy or sell a mount specified');
         }
+        if (Array.isArray(gasPrice)) {
+            gasPrice = gasPrice[gasPrice.length - 1];
+        }
         return {
+            apiKey: req.header('0x-api-key'),
             buyToken: this._getTokenSymbol(buyToken),
             sellToken: this._getTokenSymbol(sellToken),
             buyTokenAddress: buyToken === this._chainConfig.gasTokenSymbol
@@ -111,7 +116,7 @@ class Server {
             sellAmount: sellAmount !== undefined ? new BigNumber(sellAmount) : undefined,
             bridgeSlippage: query.bridgeSlippage !== undefined ? parseFloat(query.bridgeSlippage) : undefined,
             maxFallbackSlippage: query.maxFallbackSlippage !== undefined ? parseFloat(query.maxFallbackSlippage) : undefined,
-            gasPrice: query.gasPrice !== undefined ? new BigNumber(query.gasPrice) : undefined,
+            gasPrice: gasPrice !== undefined ? new BigNumber(gasPrice) : undefined,
             numSamples: query.numSamples !== undefined ? parseInt(query.numSamples) : undefined,
             runLimit: query.runLimit !== undefined ? parseInt(query.runLimit) : undefined,
             excludedSources: (query.excludedSources || '').split(',').filter(s => s).map(s => s === '0x' ? 'Native' : s),

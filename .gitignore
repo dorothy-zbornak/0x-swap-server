@@ -1,4 +1,4 @@
 /node_modules
 **.log
 yarn.lock
-*.config.json
+secrets.json
