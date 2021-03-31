@@ -29,12 +29,9 @@ const DEFAULT_MARKET_OPTS = {
     rfqt: { makerEndpointMaxResponseTimeMs: 600 },
 };
 
-const INTERMEDIATE_TOKENS = ['WETH','DAI','USDC','USDT','WBTC'];
-
 module.exports = {
     SRA_API_URL,
     PROTOCOL_FEE,
     DEFAULT_MARKET_OPTS,
-    INTERMEDIATE_TOKENS,
     GAS_STATION_URL,
 };

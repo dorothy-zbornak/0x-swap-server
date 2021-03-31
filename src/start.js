@@ -9,17 +9,15 @@ const yargs = require('yargs');
 const _ = require('lodash');
 const fs = require('fs');
 
-const TOKENS = require('./tokens');
 const { Server } = require('./server');
-const { addresses } = require('./addresses');
 const {
     DEFAULT_MARKET_OPTS,
     GAS_STATION_URL,
-    INTERMEDIATE_TOKENS,
     SRA_API_URL,
 } = require('./constants');
 
 const ARGV = yargs
+    .option('chainId', { alias: 'c', type: 'number', default: 1})
     .option('port', { alias: 'p', type: 'number', default: 7001 })
     .option('pool', { alias: 'l', type: 'string' })
     .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
@@ -28,9 +26,10 @@ const ARGV = yargs
     .option('rfqt-config', { alias: 'R', type: 'string' })
     .argv;
 
+const CHAIN_CONFIG = require('./chain-configs')[ARGV.chainId];
 const RFQT_OPTS = ARGV.rfqtConfig ? JSON.parse(fs.readFileSync(ARGV.rfqtConfig)) : {};
 const SWAP_QUOTER_OPTS = {
-    chainId: 1,
+    chainId: ARGV.chainId,
     liquidityProviderRegistryAddress: ARGV.pool,
     expiryBufferMs: 60 * 1000,
     // contractAddresses: addresses,
@@ -41,15 +40,15 @@ const SWAP_QUOTER_OPTS = {
         infoLogger: () => {},
     },
     tokenAdjacencyGraph: {
-        default: INTERMEDIATE_TOKENS.map(t => TOKENS[t].address),
+        default: CHAIN_CONFIG.intermediateTokens.map(t => CHAIN_CONFIG.tokens[t].address),
     },
-    permittedOrderFEeTypes: new Set([OrderPrunerPermittedFeeTypes.NoFees]),
+    permittedOrderFeeTypes: new Set([OrderPrunerPermittedFeeTypes.NoFees]),
 };
 
 (async() => {
     const provider = createZeroExProvider(process.env.NODE_RPC);
     const orderbook = createOrderbook(SRA_API_URL);
-    const server = new Server(provider, addresses);
+    const server = new Server(provider, ARGV.chainId);
     server.addQuoteEndpoint('/swap/dev/quote', createQuoter(provider, orderbook), { v0: ARGV.v0 });
     await server.listen(ARGV.port);
     console.log(`${'*'.bold} Listening on port ${ARGV.port.toString().bold.green}...`);
@@ -100,7 +99,7 @@ function createQuoter(provider, orderbook) {
             {
                 rfqt: {
                     apiKey: RFQT_OPTS.apiKey,
-                    takerAddress: addresses.exchangeProxyFlashWallet,
+                    takerAddress: CHAIN_CONFIG.addresses.exchangeProxyFlashWallet,
                     intentOnFilling: !!opts.takerAddress,
                 },
             },
