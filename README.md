@@ -13,12 +13,39 @@ You can also edit `src/start.js` to configure the swap-server (it might not alwa
 
 ## Running
 ```bash
-NODE_RPC=YOUR_NODE_RPC yarn start [--pool LP_POOL_REGISTRY_ADDRESS] [-R RFQT_CONFIG_FILE]
+NODE_RPC=YOUR_NODE_RPC yarn start [-S SECRETS_FILE]
 ```
 
 ### Options
 
 | option | description |
 |--------|-------------|
-| `--v0` | Run in v0 (non-Exchange Proxy) mode |
 | `--pool` | The address of the liqudity provider registry contract |
+| `--port | -p` | The port to run on |
+| `--secrets | -S` | secrets config file (see below) |
+
+## Secrets file
+To unlock RFQT and liquidity provider access requests need to pass the `0x-api-key` header in requests AND you need to create a `secrets.json` file in the root of the project. This file has the following shape:
+
+```js
+{
+    "liquidityProviderRegistry": {
+        [lpAddress]: {
+            "tokens": [...TOKEN_ADDRESSES],
+            "gasCost": GAS_COST,
+        },
+        ...
+    },
+    "rfqt": {
+        "validApiKeys": [...VALID_API_KEYS],
+        "offeringsByChainId": {
+            [CHAIN_ID_AS_STRING]: {
+                [RFQT_ENDPOINT]: [[TOKEN_A, TOKEN_B], ...],
+            },
+            ...
+        }
+    }
+}
+```
+
+All this stuff can be pulled from the infra configs.
