@@ -68,7 +68,10 @@ class Server {
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount,
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
-                        maxSellAmount: quote.worstCaseQuoteInfo.totalTakerAmount,
+                        maxSellAmount: BigNumber.max(
+                            quote.bestCaseQuoteInfo.totalTakerAmount,
+                            quote.worstCaseQuoteInfo.totalTakerAmount
+                        ),
                     });
                 } catch (err) {
                     console.error(err);

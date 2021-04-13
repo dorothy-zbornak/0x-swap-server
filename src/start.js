@@ -24,6 +24,7 @@ const ARGV = yargs
     .option('samples', { alias: 's', type: 'number', default: 13 })
     .option('dist', { alias: 'd', type: 'number', default: 1.05 })
     .option('secrets', { alias: 'S', type: 'string' })
+    .option('prefix', { alias: 'P', type: 'string', default: 'dev' })
     .argv;
 
 const CHAIN_CONFIG = require('./chain-configs')[ARGV.chainId];
@@ -48,7 +49,7 @@ const SWAP_QUOTER_OPTS = {
     const provider = createZeroExProvider(process.env.NODE_RPC);
     const orderbook = createOrderbook(SRA_API_URL);
     const server = new Server(provider, ARGV.chainId);
-    server.addQuoteEndpoint('/swap/dev/quote', createQuoter(provider, orderbook), { v0: ARGV.v0 });
+    server.addQuoteEndpoint(`/swap/${ARGV.prefix}/quote`, createQuoter(provider, orderbook), { v0: ARGV.v0 });
     await server.listen(ARGV.port);
     console.log(`${'*'.bold} Listening on port ${ARGV.port.toString().bold.green}...`);
 })();
