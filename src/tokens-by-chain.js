@@ -171,5 +171,27 @@ module.exports = {
             decimals: 18,
             address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
         },
+    },
+    '3': {
+        ETH: {
+            decimals: 18,
+            address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        },
+        WETH: {
+            decimals: 18,
+            address: '0xc778417e063141139fce010982780140aa0cd5ab',
+        },
+        WEENUS: {
+            decimals: 18,
+            address: '0x101848D5C5bBca18E6b4431eEdF6B95E9ADF82FA',
+        },
+        XEENUS: {
+            decimals: 18,
+            address: '0x7E0480Ca9fD50EB7A3855Cf53c347A1b4d6A2FF5',
+        },
+        YEENUS: {
+            decimals: 8,
+            address: '0xF6fF95D53E08c9660dC7820fD5A775484f77183A',
+        },
     }
 };

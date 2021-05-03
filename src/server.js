@@ -4,22 +4,17 @@ const { FillQuoteTransformerOrderType } = require('@0x/protocol-utils');
 const BigNumber = require('bignumber.js');
 const express = require('express');
 const cors = require('cors');
-const CHAIN_CONFIGS = require('./chain-configs');
 
 class Server {
-    constructor(provider, chainId=1, chainConfig=undefined) {
-        this._chainId = chainId;
-        this._chainConfig = chainConfig || CHAIN_CONFIGS[chainId];
-        if (!this._chainConfig) {
-            throw new Error(`No chain config for chainId ${chainId}`);
-        }
+    constructor(chainConfig) {
+        this._chainId = chainConfig.chainId;
+        this._chainConfig = chainConfig;
         this._app = express();
         this._app.use(cors());
         this._app.use(express.json());
         this._quoteConsumer = new SwapQuoteConsumer(
-            provider,
             {
-                chainId: chainId,
+                chainId: this._chainId,
                 contractAddresses: this._chainConfig.addresses,
             },
         );
@@ -63,7 +58,7 @@ class Server {
                         sources: Object.entries(quote.sourceBreakdown)
                             .map(([name, proportion]) => ({ name, proportion })),
                         orders: serializeOrdersToOutput(quote.orders),
-                        protocolFee: '0',
+                        protocolFee: '0', // TODO
                         buyAmount: quote.bestCaseQuoteInfo.makerAmount,
                         sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount,
                         buyTokenAddress: quoterOpts.buyTokenAddress,

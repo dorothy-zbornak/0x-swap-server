@@ -9,16 +9,18 @@ const yargs = require('yargs');
 const _ = require('lodash');
 const fs = require('fs');
 
+const { getChainConfig } = require('./chain-configs');
 const { Server } = require('./server');
 const {
-    DEFAULT_MARKET_OPTS,
+    DEFAULT_MARKET_OPTS_BY_CHAIN_ID,
+    EMPTY_SECRETS,
     GAS_STATION_URL,
     SRA_API_URL,
     NULL_ADDRESS,
 } = require('./constants');
+const { NODE_RPC } = process.env;
 
 const ARGV = yargs
-    .option('chainId', { alias: 'c', type: 'number', default: 1})
     .option('port', { alias: 'p', type: 'number', default: 7001 })
     .option('runLimit', { alias: 'r', type: 'number', default: 2 ** 8 })
     .option('samples', { alias: 's', type: 'number', default: 13 })
@@ -27,32 +29,23 @@ const ARGV = yargs
     .option('prefix', { alias: 'P', type: 'string', default: 'dev' })
     .argv;
 
-const CHAIN_CONFIG = require('./chain-configs')[ARGV.chainId];
-const SECRETS = ARGV.secrets ? JSON.parse(fs.readFileSync(ARGV.secrets)) : {};
-const SWAP_QUOTER_OPTS = {
-    chainId: ARGV.chainId,
-    liquidityProviderRegistry: SECRETS.liquidityProviderRegistry || {},
-    expiryBufferMs: 60 * 1000,
-    ethGasStationUrl: GAS_STATION_URL,
-    rfqt: {
-        takerApiKeyWhitelist: SECRETS.rfqt.validApiKeys ? SECRETS.rfqt.validApiKeys : [],
-        makerAssetOfferings: (SECRETS.rfqt.offeringsByChainId || {})[ARGV.chainId] || {},
-        infoLogger: () => {},
-    },
-    tokenAdjacencyGraph: {
-        default: CHAIN_CONFIG.intermediateTokens.map(t => CHAIN_CONFIG.tokens[t].address),
-    },
-    permittedOrderFeeTypes: new Set([OrderPrunerPermittedFeeTypes.NoFees]),
+const SECRETS = {
+    ...EMPTY_SECRETS,
+    ...(ARGV.secrets ? JSON.parse(fs.readFileSync(ARGV.secrets)) : {}),
 };
 
 (async() => {
-    const provider = createZeroExProvider(process.env.NODE_RPC);
-    const orderbook = createOrderbook(SRA_API_URL);
-    const server = new Server(provider, ARGV.chainId);
-    server.addQuoteEndpoint(`/swap/${ARGV.prefix}/quote`, createQuoter(provider, orderbook), { v0: ARGV.v0 });
+    const chainId = await getChainId();
+    const server = new Server(getChainConfig(chainId));
+    server.addQuoteEndpoint(`/swap/${ARGV.prefix}/quote`, createQuoter(chainId), { v0: ARGV.v0 });
     await server.listen(ARGV.port);
-    console.log(`${'*'.bold} Listening on port ${ARGV.port.toString().bold.green}...`);
+    console.log(`${'*'.bold} Listening on port ${ARGV.port.toString().bold.green}, network id ${chainId.toString().bold.yellow}...`);
 })();
+
+async function getChainId() {
+    const w3 = new Web3(createWeb3Provider());
+    return parseInt(await w3.eth.net.getId());
+}
 
 function createOrderbook(sraApiUrl) {
     // TODO: enable orderbook for OO orders.
@@ -63,29 +56,48 @@ function createOrderbook(sraApiUrl) {
     };
 }
 
-function createZeroExProvider(rpcHost) {
-    let provider;
-    if (/^ws:\/\//.test(rpcHost)) {
-        provider = new Web3.providers.WebsocketProvider(rpcHost);
-    } else if (/^https?:\/\//.test(rpcHost)) {
-        provider = new Web3.providers.HttpProvider(rpcHost);
+function createWeb3Provider() {
+    if (/^ws:\/\//.test(NODE_RPC)) {
+        return new Web3.providers.WebsocketProvider(NODE_RPC);
     }
+    return new Web3.providers.HttpProvider(NODE_RPC);
+}
+
+function createZeroExProvider(NODE_RPC) {
+    const w3p = createWeb3Provider(NODE_RPC);
     return {
-        sendAsync: (payload, callback) => provider.send(payload, (err, r) => callback(err || null, r)),
+        sendAsync: (payload, callback) => w3p.send(payload, (err, r) => callback(err || null, r)),
     };
 }
 
-function createQuoter(provider, orderbook) {
+function createQuoter(chainId) {
+    const chainConfig = getChainConfig(chainId);
+    const quoterOpts = {
+        chainId: chainConfig.chainId,
+        liquidityProviderRegistry: SECRETS.liquidityProviderRegistryByChainId[chainId] || {},
+        expiryBufferMs: 60 * 1000,
+        ethGasStationUrl: GAS_STATION_URL,
+        rfqt: {
+            takerApiKeyWhitelist: SECRETS.rfqt.validApiKeys ? SECRETS.rfqt.validApiKeys : [],
+            makerAssetOfferings: SECRETS.rfqt.offeringsByChainId[ARGV.chainId] || {},
+            infoLogger: () => {},
+        },
+        tokenAdjacencyGraph: {
+            default: chainConfig.intermediateTokens.map(t => chainConfig.tokens[t].address),
+        },
+        permittedOrderFeeTypes: new Set([OrderPrunerPermittedFeeTypes.NoFees]),
+    };
+
     const swapQuoter = new SwapQuoter(
-        provider,
-        orderbook,
-        SWAP_QUOTER_OPTS,
+        createZeroExProvider(process.env.NODE_RPC),
+        createOrderbook(),
+        quoterOpts,
     );
     return async (opts) => {
         console.log(`dev: ${JSON.stringify(opts)}`);
         const marketOpts = _.merge(
             {},
-            DEFAULT_MARKET_OPTS,
+            chainConfig.marketOpts,
             {
                 runLimit: ARGV.runLimit,
                 samples: ARGV.samples,
