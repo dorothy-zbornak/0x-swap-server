@@ -2,7 +2,6 @@
 require('colors');
 const Web3 = require('web3');
 const { SwapQuoter, MarketOperation, OrderPrunerPermittedFeeTypes } = require('@0x/asset-swapper');
-const { Orderbook } = require('@0x/orderbook');
 const BigNumber = require('bignumber.js');
 const process = require('process');
 const yargs = require('yargs');
