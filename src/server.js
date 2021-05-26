@@ -59,14 +59,14 @@ class Server {
                             .map(([name, proportion]) => ({ name, proportion })),
                         orders: serializeOrdersToOutput(quote.orders),
                         protocolFee: '0', // TODO
-                        buyAmount: quote.bestCaseQuoteInfo.makerAmount,
-                        sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount,
+                        buyAmount: quote.bestCaseQuoteInfo.makerAmount.toString(10),
+                        sellAmount: quote.bestCaseQuoteInfo.totalTakerAmount.toString(10),
                         buyTokenAddress: quoterOpts.buyTokenAddress,
                         sellTokenAddress: quoterOpts.sellTokenAddress,
                         maxSellAmount: BigNumber.max(
                             quote.bestCaseQuoteInfo.totalTakerAmount,
                             quote.worstCaseQuoteInfo.totalTakerAmount
-                        ),
+                        ).toString(10),
                     });
                 } catch (err) {
                     console.error(err);
@@ -120,6 +120,7 @@ class Server {
             excludedSources: (query.excludedSources || '').split(',').filter(s => s).map(s => s === '0x' ? 'Native' : s),
             includedSources: (query.includedSources || '').split(',').filter(s => s).map(s => s === '0x' ? 'Native' : s),
             takerAddress: query.takerAddress,
+            block: query.block ? parseInt(query.block) : undefined,
         };
     }
 

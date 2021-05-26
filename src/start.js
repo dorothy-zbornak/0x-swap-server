@@ -115,6 +115,7 @@ function createQuoter(chainId) {
                     } : {}),
             },
         );
+        process.env.SAMPLE_BLOCK = opts.block;
         if (opts.buyAmount) {
             return swapQuoter.getSwapQuoteAsync(
                 opts.buyTokenAddress,
