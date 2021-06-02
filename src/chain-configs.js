@@ -21,24 +21,7 @@ const DEFAULT_MARKET_OPTS = {
     sampleDistributionBase: 1.05,
     allowFallback: true,
     exchangeProxyOverhead: sourceFlags => {
-        if ([SOURCE_FLAGS.Uniswap_V2, SOURCE_FLAGS.SushiSwap].includes(sourceFlags)) {
-            // Uniswap VIP
-            return TX_BASE_GAS;
-        } else if (SOURCE_FLAGS.LiquidityProvider === sourceFlags) {
-            // PLP VIP
-            return TX_BASE_GAS.plus(10e3);
-        } else if ((MULTIPLEX_BATCH_FILL_SOURCE_FLAGS | sourceFlags) === MULTIPLEX_BATCH_FILL_SOURCE_FLAGS) {
-            // Multiplex batch fill
-            return TX_BASE_GAS.plus(25e3);
-        } else if (
-            (MULTIPLEX_MULTIHOP_FILL_SOURCE_FLAGS | sourceFlags) ===
-            (MULTIPLEX_MULTIHOP_FILL_SOURCE_FLAGS | SOURCE_FLAGS.MultiHop)
-        ) {
-            // Multiplex multi-hop fill
-            return TX_BASE_GAS.plus(25e3);
-        } else {
-            return FILL_QUOTE_TRANSFORMER_GAS_OVERHEAD;
-        }
+        return new BigNumber(0);
     },
     rfqt: { makerEndpointMaxResponseTimeMs: 600 },
 };
